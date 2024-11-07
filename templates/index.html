@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Capture and Upload Image</title>
+    <style>
+        video, canvas {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Capture and Upload Image</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="captureAndUpload">Capture and Upload</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="image" id="imageFile" style="display:none;">
+    </form>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const uploadForm = document.getElementById('uploadForm');
+        const imageFileInput = document.getElementById('imageFile');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing webcam: " + err);
+            });
+
+        // Capture the photo and upload
+        document.getElementById('captureAndUpload').addEventListener('click', () => {
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                if (blob) {
+                    const file = new File([blob], 'captured_image.png', { type: 'image/png' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    imageFileInput.files = dataTransfer.files; // Set the file input's files
+
+                    // Debugging output to check if the file input is populated
+                    console.log("File input populated:", imageFileInput.files);
+
+                    uploadForm.submit(); // Submit the form immediately after capturing the image
+                } else {
+                    console.error("Blob creation failed.");
+                }
+            }, 'image/png');
+        });
+    </script>
+</body>
+</html>
